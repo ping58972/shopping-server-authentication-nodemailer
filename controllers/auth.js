@@ -1,14 +1,24 @@
+const crypto = require('crypto');
+
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
-const sendgridTransport = require('nodemailer-sendgrid-transport');
+//const sendgridTransport = require('nodemailer-sendgrid-transport');
 
 const User = require('../modles/user');
 
-const transporter = nodemailer.createTransport(sendgridTransport({
+// const transporter = nodemailer.createTransport(sendgridTransport({
+//   auth: {
+//     api_key: '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'
+//   }
+// }));
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
   auth: {
-    api_key: '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'
+    user: 'ping4learn@gmail.com',
+    pass: '58972pink'
   }
-}));
+});
+//const mailOptions = 
 
 exports.getLogin = (req, res, next) => {
   // const isLoggedIn = req.get('cookie').split(';')[0].trim().split('=')[1] === 'true';
@@ -123,5 +133,50 @@ exports.getReset = (req, res, next) => {
     path: '/reset',
     pageTitle: 'Reset Password',
    errorMessage: message
+  });
+}
+
+exports.postReset = (req, res, next) => {
+  crypto.randomBytes(32, (err, buffer) => {
+    if(err) {
+      console.log(err);
+      return res.redirect('/reset');
+    }
+    const token = buffer.toString('hex');
+    User.findOne({email: req.body.email})
+    .then(user => {
+      if(!user) {
+        req.flash('error', 'No account with that email found!');
+        return res.redirect('/reset');
+      }
+      user.resetToken = token;
+      user.resetTokenExpiration = Date.now() + 3600000;
+      user.save();
+    })
+    .then(result => {
+      res.redirect('/');
+      // transporter.sendMail({
+      //   to: req.body.email,
+      //   from: 'ping@ping58972.com',
+      //   subject: 'Password reset',
+      //   html: `
+      //   <p>You requested a password reset</p>
+      //   <p>Click this <a href="http://localhost:3000/reset/${token}">Link</a>to set a new password</p>
+      //   `
+      // });
+      transporter.sendMail({
+        from: 'ping4learn@gmail.com',
+        to: req.body.email,
+        subject: 'Password reset',
+        html: `
+        <p>You requested a password reset</p>
+        <p>Click this <a href="http://localhost:3000/reset/${token}">Link</a>to set a new password</p>
+        `
+      }, (err, info) => {
+        if(err) console.log(err);
+        else console.log(info);
+      });
+    })
+    .catch(err=>console.log(err));
   });
 }

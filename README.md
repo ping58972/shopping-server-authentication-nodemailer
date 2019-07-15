@@ -1,4 +1,4 @@
-# Shop Server: Authentication
+# Shop Server: Authentication & Nodemailer
 
 This project is the multiple pages render web server, All page on back-end by using EJS templating with Expressjs and using cloud database MongoDB Atlas. The website features include: creating own product for selling or looking buy some products in the website. The website can process with authentication, etc.
 
